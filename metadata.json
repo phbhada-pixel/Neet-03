@@ -1,0 +1,6 @@
+{
+  "name": "NEET Prep Master",
+  "description": "Standardised NEET UG Exam Preparation platform featuring daily timed mock tests, official NTA pattern simulator, step-by-step solutions, AI Doubt Solver, and comprehensive performance analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
