@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Subject } from '../types/neet';
-import { Bot, Brain, ChevronRight, MessageSquareCode, Send, Sparkles, User, Zap } from 'lucide-react';
+import { Subject, UserAnalytics } from '../types/neet';
+import { AlertTriangle, Bot, Brain, ChevronRight, HelpCircle, MessageSquareCode, Send, Sparkles, User, Zap } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -10,9 +10,74 @@ interface ChatMessage {
   timestamp: string;
 }
 
-export const AIDoubtSolver: React.FC = () => {
+interface AIDoubtSolverProps {
+  analytics?: UserAnalytics;
+}
+
+export function getWeakestCategoryAndTopic(analytics?: UserAnalytics) {
+  if (!analytics) {
+    return {
+      subject: 'Physics' as Subject,
+      accuracy: 62,
+      topic: 'Rotational Motion & Moment of Inertia',
+      reason: 'Lowest radar score accuracy (62%) in mock test profile',
+    };
+  }
+
+  const subjectAcc = analytics.subjectAccuracy || {
+    Physics: 62,
+    Chemistry: 74,
+    Botany: 85,
+    Zoology: 88,
+  };
+
+  const subjects: Subject[] = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+  let lowestSubject: Subject = 'Physics';
+  let lowestAccuracy = 100;
+
+  subjects.forEach((sub) => {
+    const acc = subjectAcc[sub] ?? 100;
+    if (acc < lowestAccuracy) {
+      lowestAccuracy = acc;
+      lowestSubject = sub;
+    }
+  });
+
+  let lowestTopic = '';
+  if (analytics.topicStats) {
+    let minTopicAcc = 100;
+    Object.entries(analytics.topicStats).forEach(([topName, stat]) => {
+      if (stat.accuracy < minTopicAcc) {
+        minTopicAcc = stat.accuracy;
+        lowestTopic = topName;
+      }
+    });
+  }
+
+  if (!lowestTopic) {
+    const defaultWeakTopics: Record<Subject, string> = {
+      Physics: 'Rotational Motion & Moment of Inertia',
+      Chemistry: 'Organic Reaction Mechanisms (Sn1/Sn2)',
+      Botany: 'Plant Physiology & Photosynthesis C3/C4 Pathways',
+      Zoology: 'Human Physiology & Cardiac Cycle ECG Interpretation',
+    };
+    lowestTopic = defaultWeakTopics[lowestSubject] || 'High-Yield NCERT Concepts';
+  }
+
+  return {
+    subject: lowestSubject,
+    accuracy: lowestAccuracy,
+    topic: lowestTopic,
+    reason: `Radar analytics identified ${lowestSubject} as your lowest performing category (${lowestAccuracy}% accuracy).`,
+  };
+}
+
+export const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ analytics }) => {
   const [activeTab, setActiveTab] = useState<'chat' | 'practice-generator'>('chat');
-  const [selectedSubject, setSelectedSubject] = useState<Subject>('Physics');
+
+  const weakInfo = getWeakestCategoryAndTopic(analytics);
+
+  const [selectedSubject, setSelectedSubject] = useState<Subject>(weakInfo.subject);
   const [inputDoubt, setInputDoubt] = useState<string>('');
   const [isSending, setIsSending] = useState<boolean>(false);
 
@@ -21,13 +86,13 @@ export const AIDoubtSolver: React.FC = () => {
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: "Namaste! I am **NEET Guru**, your dedicated AI Tutor. I am trained on NCERT Class 11 and Class 12 Physics, Chemistry, Botany, and Zoology.\n\nAsk me any doubt, formula derivation, reaction mechanism, or NCERT line concept!",
+      text: `Namaste! I am **NEET Guru**, your dedicated AI Tutor.\n\n📊 **Radar Analytics Alert:** I noticed your lowest radar score category is **${weakInfo.subject}** (${weakInfo.accuracy}% accuracy).\n\nI recommend revising **${weakInfo.topic}**. Ask me any doubt or generate practice questions!`,
       timestamp: 'Just now',
     },
   ]);
 
   // Practice generator state
-  const [genTopic, setGenTopic] = useState<string>('');
+  const [genTopic, setGenTopic] = useState<string>(weakInfo.topic);
   const [genDifficulty, setGenDifficulty] = useState<string>('Medium');
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [isGenLoading, setIsGenLoading] = useState<boolean>(false);
@@ -165,6 +230,57 @@ export const AIDoubtSolver: React.FC = () => {
             <Sparkles className="w-4 h-4" />
             <span>AI Practice Generator</span>
           </button>
+        </div>
+      </div>
+
+      {/* Radar Analytics Auto-Suggested Study Focus Banner */}
+      <div className="bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-900 border border-indigo-500/30 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1">
+                <Sparkles className="w-3 h-3 text-indigo-400" />
+                <span>Radar Analytics Recommendation</span>
+              </span>
+              <span className="text-slate-400 text-xs">
+                Lowest Category: <strong className="text-amber-400">{weakInfo.subject} ({weakInfo.accuracy}%)</strong>
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-white">
+              Recommended Focus Topic: <span className="text-indigo-300">{weakInfo.topic}</span>
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {weakInfo.reason} Targeted practice in this topic can boost your total test score.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              onClick={() => {
+                setActiveTab('chat');
+                setSelectedSubject(weakInfo.subject);
+                handleSendDoubt(`Explain NCERT formulas and high-yield concepts for ${weakInfo.topic} step-by-step.`);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all flex items-center space-x-1.5"
+            >
+              <Brain className="w-3.5 h-3.5" />
+              <span>Ask Tutor to Explain</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('practice-generator');
+                setSelectedSubject(weakInfo.subject);
+                setGenTopic(weakInfo.topic);
+                handleGeneratePractice();
+              }}
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700 transition-all flex items-center space-x-1.5"
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Generate 3 MCQs</span>
+            </button>
+          </div>
         </div>
       </div>
 

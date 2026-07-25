@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AIDoubtSolver } from './components/AIDoubtSolver';
+import { AdminDashboard } from './components/AdminDashboard';
 import { DailyMockTestList } from './components/DailyMockTestList';
 import { Dashboard } from './components/Dashboard';
 import { NCERTFlashcards } from './components/NCERTFlashcards';
@@ -8,12 +9,21 @@ import { PerformanceAnalytics } from './components/PerformanceAnalytics';
 import { TestResultAnalytics } from './components/TestResultAnalytics';
 import { TestSimulator } from './components/TestSimulator';
 import { initialMockTests } from './data/mockTestsData';
-import { MockTest, Question, TestResult, UserAnalytics, UserResponse } from './types/neet';
-import { calculateTestResult, loadUserAnalytics, saveTestResultToAnalytics } from './utils/neetAnalytics';
+import { MockTest, Question, StudySession, TestResult, UserAnalytics, UserResponse } from './types/neet';
+import {
+  calculateTestResult,
+  deleteStudySessionFromAnalytics,
+  loadUserAnalytics,
+  saveStudySessionToAnalytics,
+  saveTestResultToAnalytics,
+} from './utils/neetAnalytics';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin'>('dashboard');
   
+  // Mock tests list state
+  const [mockTests, setMockTests] = useState<MockTest[]>(initialMockTests);
+
   // Test execution state
   const [activeTest, setActiveTest] = useState<MockTest | null>(null);
   const [currentTestResult, setCurrentTestResult] = useState<TestResult | null>(null);
@@ -21,7 +31,11 @@ export default function App() {
   // Analytics state
   const [analytics, setAnalytics] = useState<UserAnalytics>(() => loadUserAnalytics());
 
-  const dailyMockTest = initialMockTests.find((t) => t.isDailySpecial) || initialMockTests[0];
+  const dailyMockTest = mockTests.find((t) => t.isDailySpecial) || mockTests[0];
+
+  const handleAddMockTest = (newTest: MockTest) => {
+    setMockTests((prev) => [newTest, ...prev]);
+  };
 
   // Handler to launch a test
   const handleStartTest = (test: MockTest) => {
@@ -45,6 +59,18 @@ export default function App() {
     if (confirm('Are you sure you want to exit the test? Your progress will not be saved.')) {
       setActiveTest(null);
     }
+  };
+
+  // Handler when user completes a Pomodoro study session
+  const handleSaveStudySession = (session: StudySession) => {
+    const updated = saveStudySessionToAnalytics(session);
+    setAnalytics(updated);
+  };
+
+  // Handler to delete a study session from analytics
+  const handleDeleteStudySession = (sessionId: string) => {
+    const updated = deleteStudySessionFromAnalytics(sessionId);
+    setAnalytics(updated);
   };
 
   // Handler when user asks AI Tutor about a specific question from test result
@@ -105,26 +131,38 @@ export default function App() {
                 dailyMockTest={dailyMockTest}
                 onStartTest={handleStartTest}
                 onNavigateTab={(tab) => setActiveTab(tab)}
+                onSaveStudySession={handleSaveStudySession}
               />
             )}
 
             {activeTab === 'tests' && (
               <DailyMockTestList
-                mockTests={initialMockTests}
+                mockTests={mockTests}
                 onStartTest={handleStartTest}
               />
             )}
 
             {activeTab === 'analytics' && (
-              <PerformanceAnalytics analytics={analytics} />
+              <PerformanceAnalytics
+                analytics={analytics}
+                onDeleteSession={handleDeleteStudySession}
+              />
             )}
 
             {activeTab === 'ai-tutor' && (
-              <AIDoubtSolver />
+              <AIDoubtSolver analytics={analytics} />
             )}
 
             {activeTab === 'flashcards' && (
               <NCERTFlashcards />
+            )}
+
+            {activeTab === 'admin' && (
+              <AdminDashboard
+                mockTests={mockTests}
+                onAddMockTest={handleAddMockTest}
+                onNavigateTab={(tab) => setActiveTab(tab)}
+              />
             )}
           </>
         )}

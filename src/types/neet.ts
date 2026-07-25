@@ -81,6 +81,15 @@ export interface TestResult {
   userResponses: Record<string, UserResponse>;
 }
 
+export interface StudySession {
+  id: string;
+  subject: Subject | 'NCERT Revision' | 'Mock Review';
+  durationMinutes: number;
+  completedAt: string;
+  notes?: string;
+  mode: '25/5' | '45/10' | '50/10' | '90/15' | 'Custom';
+}
+
 export interface UserAnalytics {
   totalTestsTaken: number;
   averageScore: number;
@@ -93,6 +102,8 @@ export interface UserAnalytics {
   bookmarks: string[]; // Question IDs
   topicStats: Record<string, { correct: number; total: number; accuracy: number; subject: Subject }>;
   subjectAccuracy: Record<Subject, number>;
+  studySessions?: StudySession[];
+  totalStudyMinutes?: number;
 }
 
 export interface Flashcard {

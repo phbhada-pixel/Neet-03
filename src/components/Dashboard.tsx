@@ -1,12 +1,14 @@
 import React from 'react';
-import { MockTest, UserAnalytics } from '../types/neet';
-import { ArrowRight, Award, BookOpen, Brain, CheckCircle2, Flame, LineChart, Play, Sparkles, Target, Zap } from 'lucide-react';
+import { MockTest, StudySession, UserAnalytics } from '../types/neet';
+import { ArrowRight, Award, BookOpen, Brain, CheckCircle2, Clock, Flame, LineChart, Play, Sparkles, Target, Zap } from 'lucide-react';
+import { StudyPomodoroTimer } from './StudyPomodoroTimer';
 
 interface DashboardProps {
   analytics: UserAnalytics;
   dailyMockTest: MockTest;
   onStartTest: (test: MockTest) => void;
   onNavigateTab: (tab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards') => void;
+  onSaveStudySession: (session: StudySession) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -14,11 +16,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
   dailyMockTest,
   onStartTest,
   onNavigateTab,
+  onSaveStudySession,
 }) => {
   const projectedAIR = analytics.highestScore >= 650 ? "AIR < 1,500 (AIIMS / Top GMC)"
     : analytics.highestScore >= 600 ? "AIR < 8,000 (Govt Medical College)"
     : analytics.highestScore >= 520 ? "AIR < 35,000 (State Counseling Tier)"
     : "Qualifying Target Tier";
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const allSessions = analytics.studySessions || [];
+  const todaySessions = allSessions.filter((s) => s.completedAt.startsWith(todayStr));
+  const totalTodayMinutes = todaySessions.reduce((acc, s) => acc + s.durationMinutes, 0);
+  const totalAllTimeMinutes = analytics.totalStudyMinutes || allSessions.reduce((acc, s) => acc + s.durationMinutes, 0);
 
   return (
     <div className="space-y-8 pb-12">
@@ -79,7 +88,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Key Metric Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {/* Total Tests */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-white shadow-md hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between mb-3">
@@ -118,8 +127,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <p className="text-xs text-slate-400 mt-1">{analytics.totalQuestionsAttempted} Questions Solved</p>
         </div>
 
-        {/* Active Streak */}
+        {/* Deep Work Focus Hours */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-white shadow-md hover:border-slate-700 transition-all">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Deep Work Focus</span>
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold text-indigo-300">
+            {(totalAllTimeMinutes / 60).toFixed(1)} <span className="text-xs text-slate-400 font-normal">Hrs</span>
+          </div>
+          <p className="text-xs text-indigo-400/80 mt-1 font-medium">
+            {allSessions.length} Focus Sessions Logged
+          </p>
+        </div>
+
+        {/* Active Streak */}
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-white shadow-md hover:border-slate-700 transition-all col-span-2 md:col-span-1">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Study Streak</span>
             <div className="p-2 bg-rose-500/10 text-rose-400 rounded-xl">
@@ -130,6 +155,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <p className="text-xs text-slate-400 mt-1">Consistent Prep Schedule</p>
         </div>
       </div>
+
+      {/* Pomodoro Study Timer Component */}
+      <StudyPomodoroTimer
+        onSessionComplete={onSaveStudySession}
+        totalTodayMinutes={totalTodayMinutes}
+        sessionCountToday={todaySessions.length}
+      />
 
       {/* Subject Mastery & NCERT Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

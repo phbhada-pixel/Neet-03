@@ -1,9 +1,9 @@
 import React from 'react';
-import { Award, BookOpen, Flame, LayoutDashboard, LineChart, MessageSquareCode, Target, Zap } from 'lucide-react';
+import { Award, BookOpen, Flame, LayoutDashboard, LineChart, MessageSquareCode, ShieldCheck, Target, Zap } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards';
-  setActiveTab: (tab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards') => void;
+  activeTab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin') => void;
   streakDays: number;
   averageScore: number;
 }
@@ -102,6 +102,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <BookOpen className="w-4 h-4 text-amber-400" />
               <span>NCERT Revision</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'admin'
+                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-purple-400" />
+              <span>Admin</span>
+            </button>
           </nav>
 
           {/* Right Badges & Stats */}
@@ -172,6 +184,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <BookOpen className="w-4 h-4 mb-1" />
           <span>NCERT</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('admin')}
+          className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
+            activeTab === 'admin' ? 'text-purple-400' : 'text-slate-400'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 mb-1" />
+          <span>Admin</span>
         </button>
       </div>
     </header>

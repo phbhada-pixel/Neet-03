@@ -1,4 +1,4 @@
-import { MockTest, Question, Subject, SubjectResult, TestResult, UserAnalytics, UserResponse } from '../types/neet';
+import { MockTest, Question, StudySession, Subject, SubjectResult, TestResult, UserAnalytics, UserResponse } from '../types/neet';
 
 const STORAGE_KEY = 'neet_prep_master_analytics_v2';
 const BOOKMARKS_KEY = 'neet_prep_master_bookmarks_v2';
@@ -124,6 +124,25 @@ export function loadUserAnalytics(): UserAnalytics {
     console.error('Error reading analytics from localStorage:', e);
   }
 
+  const initialSessions: StudySession[] = [
+    {
+      id: 'session-demo-1',
+      subject: 'Physics',
+      durationMinutes: 45,
+      completedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+      notes: 'Rotational Motion Formulas & Moment of Inertia Questions',
+      mode: '45/10',
+    },
+    {
+      id: 'session-demo-2',
+      subject: 'Botany',
+      durationMinutes: 50,
+      completedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+      notes: 'NCERT Photosynthesis C4 Cycle Line-by-Line Diagram Review',
+      mode: '50/10',
+    },
+  ];
+
   return {
     totalTestsTaken: 0,
     averageScore: 0,
@@ -141,7 +160,60 @@ export function loadUserAnalytics(): UserAnalytics {
       Botany: 85,
       Zoology: 88,
     },
+    studySessions: initialSessions,
+    totalStudyMinutes: 95,
   };
+}
+
+export function saveStudySessionToAnalytics(newSession: StudySession): UserAnalytics {
+  const current = loadUserAnalytics();
+  const existingSessions = current.studySessions || [];
+  const updatedSessions = [newSession, ...existingSessions];
+  const totalMinutes = updatedSessions.reduce((acc, s) => acc + s.durationMinutes, 0);
+
+  // Update streak if needed
+  const today = new Date().toISOString().split('T')[0];
+  let streak = current.streakDays;
+  if (current.lastActiveDate !== today) {
+    streak += 1;
+  }
+
+  const updatedAnalytics: UserAnalytics = {
+    ...current,
+    studySessions: updatedSessions,
+    totalStudyMinutes: totalMinutes,
+    streakDays: streak,
+    lastActiveDate: today,
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAnalytics));
+  } catch (e) {
+    console.error('Failed to save study session to localStorage:', e);
+  }
+
+  return updatedAnalytics;
+}
+
+export function deleteStudySessionFromAnalytics(sessionId: string): UserAnalytics {
+  const current = loadUserAnalytics();
+  const existingSessions = current.studySessions || [];
+  const updatedSessions = existingSessions.filter((s) => s.id !== sessionId);
+  const totalMinutes = updatedSessions.reduce((acc, s) => acc + s.durationMinutes, 0);
+
+  const updatedAnalytics: UserAnalytics = {
+    ...current,
+    studySessions: updatedSessions,
+    totalStudyMinutes: totalMinutes,
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAnalytics));
+  } catch (e) {
+    console.error('Failed to delete study session:', e);
+  }
+
+  return updatedAnalytics;
 }
 
 export function saveTestResultToAnalytics(newResult: TestResult): UserAnalytics {
