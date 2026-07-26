@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MockTest, Subject } from '../types/neet';
+import { MockTest, Subject, Question } from '../types/neet';
+import { neetQuestionBank } from '../data/neetQuestions';
 import {
   Activity,
   AlertCircle,
@@ -46,6 +47,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newTitle, setNewTitle] = useState<string>('');
   const [newCategory, setNewCategory] = useState<'Daily Mock' | 'Full NEET 720' | 'Subject Speed Test'>('Daily Mock');
   const [newDifficulty, setNewDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
+  const [newSubject, setNewSubject] = useState<string>('All');
   const [newDuration, setNewDuration] = useState<number>(180);
   const [newDescription, setNewDescription] = useState<string>('');
 
@@ -65,6 +67,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!newTitle.trim()) return;
 
+    // Filter questions based on chosen subject
+    let testQuestions = [...neetQuestionBank];
+    if (newSubject !== 'All') {
+      testQuestions = neetQuestionBank.filter((q) => q.subject.toLowerCase() === newSubject.toLowerCase());
+    }
+
+    // Fallback if filter returned empty
+    if (testQuestions.length === 0) {
+      testQuestions = [...neetQuestionBank];
+    }
+
+    const physicsCount = testQuestions.filter((q) => q.subject === 'Physics').length;
+    const chemCount = testQuestions.filter((q) => q.subject === 'Chemistry').length;
+    const botCount = testQuestions.filter((q) => q.subject === 'Botany').length;
+    const zooCount = testQuestions.filter((q) => q.subject === 'Zoology').length;
+
     const createdTest: MockTest = {
       id: `custom-test-${Date.now()}`,
       title: newTitle.trim(),
@@ -73,16 +91,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       difficulty: newDifficulty,
       date: new Date().toISOString().split('T')[0],
       durationMinutes: Number(newDuration),
-      totalQuestions: 180,
-      totalMarks: 720,
+      totalQuestions: testQuestions.length,
+      totalMarks: testQuestions.length * 4,
       subjectDistribution: {
-        Physics: 45,
-        Chemistry: 45,
-        Botany: 45,
-        Zoology: 45,
+        Physics: physicsCount || 1,
+        Chemistry: chemCount || 1,
+        Botany: botCount || 1,
+        Zoology: zooCount || 1,
       },
       isDailySpecial: false,
-      questions: [],
+      questions: testQuestions,
     };
 
     if (onAddMockTest) {
@@ -689,16 +707,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Duration (Minutes)</label>
-                <input
-                  type="number"
-                  min="30"
-                  max="200"
-                  value={newDuration}
-                  onChange={(e) => setNewDuration(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Subject Scope</label>
+                  <select
+                    value={newSubject}
+                    onChange={(e) => setNewSubject(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="All">All Subjects (PCBZ)</option>
+                    <option value="Physics">Physics Only</option>
+                    <option value="Chemistry">Chemistry Only</option>
+                    <option value="Botany">Botany Only</option>
+                    <option value="Zoology">Zoology Only</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Duration (Minutes)</label>
+                  <input
+                    type="number"
+                    min="10"
+                    max="200"
+                    value={newDuration}
+                    onChange={(e) => setNewDuration(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2 text-emerald-300 font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Auto-Attached NCERT Question Bank Questions:</span>
+                </div>
+                <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                  {newSubject === 'All'
+                    ? neetQuestionBank.length
+                    : neetQuestionBank.filter((q) => q.subject.toLowerCase() === newSubject.toLowerCase()).length || neetQuestionBank.length}{' '}
+                  Qs
+                </span>
               </div>
 
               <div>

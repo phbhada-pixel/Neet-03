@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MockTest, Question, Subject, TestSection, UserResponse } from '../types/neet';
+import { neetQuestionBank } from '../data/neetQuestions';
 import { AlertCircle, Bookmark, Check, ChevronLeft, ChevronRight, Clock, HelpCircle, LayoutGrid, RotateCcw, Save, Send, X } from 'lucide-react';
 
 interface TestSimulatorProps {
@@ -13,6 +14,9 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
   onSubmitTest,
   onCancelTest,
 }) => {
+  // Ensure test.questions is populated even if passed an empty test paper
+  const activeQuestions = (test.questions && test.questions.length > 0) ? test.questions : neetQuestionBank;
+
   const [activeSubject, setActiveSubject] = useState<Subject>('Physics');
   const [activeSection, setActiveSection] = useState<TestSection>('Section A');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -29,17 +33,17 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
   const subjects: Subject[] = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
   
   // Filter questions for current active subject & section
-  const currentSubjectQuestions = test.questions.filter((q) => q.subject === activeSubject);
+  const currentSubjectQuestions = activeQuestions.filter((q) => q.subject === activeSubject);
   const filteredQuestions = currentSubjectQuestions.filter((q) => q.section === activeSection);
   
-  // Safety check if active section has no questions, fallback to all subject questions
-  const currentQuestionsList = filteredQuestions.length > 0 ? filteredQuestions : currentSubjectQuestions;
-  const currentQuestion: Question | undefined = currentQuestionsList[currentQuestionIndex] || test.questions[0];
+  // Safety check if active section has no questions, fallback to all subject questions or activeQuestions
+  const currentQuestionsList = filteredQuestions.length > 0 ? filteredQuestions : (currentSubjectQuestions.length > 0 ? currentSubjectQuestions : activeQuestions);
+  const currentQuestion: Question | undefined = currentQuestionsList[currentQuestionIndex] || currentQuestionsList[0] || activeQuestions[0];
 
   // Initialize response state on load
   useEffect(() => {
     const initialResponses: Record<string, UserResponse> = {};
-    test.questions.forEach((q) => {
+    activeQuestions.forEach((q) => {
       initialResponses[q.id] = {
         questionId: q.id,
         selectedOption: null,
@@ -48,7 +52,7 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
       };
     });
     setResponses(initialResponses);
-  }, [test]);
+  }, [test, activeQuestions]);
 
   // Timer interval
   useEffect(() => {
@@ -161,7 +165,7 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
   let totalAnsweredAndMarked = 0;
   let totalNotVisited = 0;
 
-  test.questions.forEach((q) => {
+  activeQuestions.forEach((q) => {
     const resp = responses[q.id];
     const isAnswered = resp && resp.selectedOption !== null && resp.selectedOption !== undefined;
     const isMarked = resp && resp.isMarkedForReview;
@@ -226,7 +230,7 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
           {/* Subject Navigation Tabs */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 flex items-center space-x-2 overflow-x-auto">
             {subjects.map((sub) => {
-              const subQuestions = test.questions.filter((q) => q.subject === sub);
+              const subQuestions = activeQuestions.filter((q) => q.subject === sub);
               if (subQuestions.length === 0) return null;
 
               return (
@@ -414,7 +418,7 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
                 <LayoutGrid className="w-4 h-4 text-emerald-400" />
                 <span>Question Palette</span>
               </h2>
-              <span className="text-xs text-slate-400 font-semibold">{test.questions.length} Qs</span>
+              <span className="text-xs text-slate-400 font-semibold">{activeQuestions.length} Qs</span>
             </div>
 
             {/* NTA Status Legend */}
@@ -504,7 +508,7 @@ export const TestSimulator: React.FC<TestSimulatorProps> = ({
             <div className="bg-slate-800/60 rounded-2xl p-4 space-y-2 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-700/60">
                 <span className="text-slate-400">Total Questions:</span>
-                <span className="font-bold text-white">{test.questions.length}</span>
+                <span className="font-bold text-white">{activeQuestions.length}</span>
               </div>
 
               <div className="flex justify-between py-1 border-b border-slate-700/60">

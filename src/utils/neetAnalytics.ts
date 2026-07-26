@@ -1,4 +1,5 @@
 import { MockTest, Question, StudySession, Subject, SubjectResult, TestResult, UserAnalytics, UserResponse } from '../types/neet';
+import { neetQuestionBank } from '../data/neetQuestions';
 
 const STORAGE_KEY = 'neet_prep_master_analytics_v2';
 const BOOKMARKS_KEY = 'neet_prep_master_bookmarks_v2';
@@ -23,7 +24,9 @@ export function calculateTestResult(
 
   const topicAccuracy: Record<string, { correct: number; total: number; accuracy: number; subject: Subject }> = {};
 
-  test.questions.forEach((q) => {
+  const testQuestions = (test.questions && test.questions.length > 0) ? test.questions : neetQuestionBank;
+
+  testQuestions.forEach((q) => {
     const resp = responses[q.id];
     const sub = q.subject;
 
