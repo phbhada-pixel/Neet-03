@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { MockTest, Question, TestResult, UserResponse } from '../types/neet';
 import confetti from 'canvas-confetti';
-import { Award, BookOpen, Brain, CheckCircle2, ChevronDown, ChevronUp, Clock, HelpCircle, Sparkles, Target, XCircle, Zap } from 'lucide-react';
+import { Award, BookOpen, Brain, CheckCircle2, ChevronDown, ChevronUp, Clock, Download, FileText, HelpCircle, Printer, Sparkles, Target, XCircle, Zap } from 'lucide-react';
+import { generateTestReportPDF } from '../utils/pdfReport';
 
 interface TestResultAnalyticsProps {
   test: MockTest;
@@ -23,6 +24,18 @@ export const TestResultAnalytics: React.FC<TestResultAnalyticsProps> = ({
   const [aiExplanationText, setAiExplanationText] = useState<string>('');
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string>('');
+  const [isPdfGenerating, setIsPdfGenerating] = useState<boolean>(false);
+
+  const handleDownloadPdf = () => {
+    try {
+      setIsPdfGenerating(true);
+      generateTestReportPDF(test, result);
+    } catch (err) {
+      console.error('Failed to generate PDF report:', err);
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
 
   // Confetti celebration on mount
   useEffect(() => {
@@ -85,26 +98,75 @@ export const TestResultAnalytics: React.FC<TestResultAnalyticsProps> = ({
   };
 
   return (
-    <div className="space-y-8 pb-12 text-white">
+    <div className="space-y-8 pb-12 text-white print:text-slate-900 print:bg-white print:pb-0">
       
+      {/* Print-Only CSS Stylesheet */}
+      <style>{`
+        @media print {
+          body {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            font-family: ui-sans-serif, system-ui, sans-serif !important;
+          }
+          nav, header, footer, .no-print {
+            display: none !important;
+          }
+          .print-card {
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border-radius: 12px !important;
+          }
+          .print-text-dark {
+            color: #0f172a !important;
+          }
+          .print-text-muted {
+            color: #475569 !important;
+          }
+          .print-page-break {
+            page-break-inside: avoid;
+          }
+        }
+      `}</style>
+
       {/* Top Banner & Scorecard */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl print-card">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none no-print" />
 
         <div className="relative z-10 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-2 print:border print:border-emerald-600 print:text-emerald-800">
                 <Award className="w-3.5 h-3.5" />
                 <span>Mock Test Scorecard Generated</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white">{test.title}</h1>
-              <p className="text-slate-300 text-xs mt-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white print-text-dark">{test.title}</h1>
+              <p className="text-slate-300 text-xs mt-1 print-text-muted">
                 Completed on {new Date(result.completedAt).toLocaleString('en-IN')}
               </p>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-2.5 no-print">
+              <button
+                onClick={handleDownloadPdf}
+                disabled={isPdfGenerating}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center space-x-1.5"
+                title="Download formatted vector PDF report"
+              >
+                <Download className="w-4 h-4" />
+                <span>{isPdfGenerating ? 'Generating PDF...' : 'Download PDF Report'}</span>
+              </button>
+
+              <button
+                onClick={() => window.print()}
+                className="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center space-x-1.5"
+                title="Print or save page as PDF"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print</span>
+              </button>
+
               <button
                 onClick={onRetakeTest}
                 className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
@@ -114,9 +176,9 @@ export const TestResultAnalytics: React.FC<TestResultAnalyticsProps> = ({
 
               <button
                 onClick={onGoHome}
-                className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold transition-all shadow-md shadow-emerald-500/20"
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
               >
-                Go to Dashboard
+                Dashboard
               </button>
             </div>
           </div>

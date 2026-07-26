@@ -1,9 +1,9 @@
 import React from 'react';
-import { Award, BookOpen, Flame, LayoutDashboard, LineChart, MessageSquareCode, ShieldCheck, Target, Zap } from 'lucide-react';
+import { Award, BookOpen, Database, Flame, LayoutDashboard, LineChart, MessageSquareCode, ShieldCheck, Target, Zap } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin';
-  setActiveTab: (tab: 'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin') => void;
+  activeTab: 'dashboard' | 'tests' | 'question-bank' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'tests' | 'question-bank' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin') => void;
   streakDays: number;
   averageScore: number;
 }
@@ -53,18 +53,26 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('tests')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'tests'
                   ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <Target className="w-4 h-4" />
-              <span>Daily Mock Tests</span>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
+              <span>Mock Tests</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('question-bank')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'question-bank'
+                  ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Database className="w-4 h-4 text-teal-400" />
+              <span>NTA Question Bank</span>
             </button>
 
             <button
@@ -154,6 +162,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Target className="w-4 h-4 mb-1" />
           <span>Mock Tests</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('question-bank')}
+          className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
+            activeTab === 'question-bank' ? 'text-teal-400' : 'text-slate-400'
+          }`}
+        >
+          <Database className="w-4 h-4 mb-1" />
+          <span>Q-Bank</span>
         </button>
 
         <button

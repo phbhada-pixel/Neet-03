@@ -4,6 +4,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { DailyMockTestList } from './components/DailyMockTestList';
 import { Dashboard } from './components/Dashboard';
 import { NCERTFlashcards } from './components/NCERTFlashcards';
+import { NTAQuestionBankExplorer } from './components/NTAQuestionBankExplorer';
 import { Navbar } from './components/Navbar';
 import { PerformanceAnalytics } from './components/PerformanceAnalytics';
 import { TestResultAnalytics } from './components/TestResultAnalytics';
@@ -19,7 +20,7 @@ import {
 } from './utils/neetAnalytics';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'tests' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tests' | 'question-bank' | 'analytics' | 'ai-tutor' | 'flashcards' | 'admin'>('dashboard');
   
   // Mock tests list state
   const [mockTests, setMockTests] = useState<MockTest[]>(initialMockTests);
@@ -138,6 +139,12 @@ export default function App() {
             {activeTab === 'tests' && (
               <DailyMockTestList
                 mockTests={mockTests}
+                onStartTest={handleStartTest}
+              />
+            )}
+
+            {activeTab === 'question-bank' && (
+              <NTAQuestionBankExplorer
                 onStartTest={handleStartTest}
               />
             )}

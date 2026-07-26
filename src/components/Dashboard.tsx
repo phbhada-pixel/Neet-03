@@ -2,6 +2,7 @@ import React from 'react';
 import { MockTest, StudySession, UserAnalytics } from '../types/neet';
 import { ArrowRight, Award, BookOpen, Brain, CheckCircle2, Clock, Flame, LineChart, Play, Sparkles, Target, Zap } from 'lucide-react';
 import { StudyPomodoroTimer } from './StudyPomodoroTimer';
+import { StudyRoadmap } from './StudyRoadmap';
 
 interface DashboardProps {
   analytics: UserAnalytics;
@@ -334,6 +335,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
       </div>
+
+      {/* Week-by-Week NCERT Study Roadmap Tracker */}
+      <StudyRoadmap onNavigateTab={onNavigateTab} />
 
       {/* Recent Mock Test History Table */}
       {analytics.testHistory.length > 0 && (
